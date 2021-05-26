@@ -3,6 +3,7 @@ from enum import Enum
 SUCCESS = 200
 CREATED = 201
 ERROR = 500
+FORBIDDEN = 403
 
 
 class Day(Enum):
