@@ -26,7 +26,7 @@ class Patient(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
-        return f"Patients ({self.id}, {self.name}, {self.pills})"
+        return f"{{ name: {self.name}, age: {self.age} }}"
 
 
 class Pill(db.Model):

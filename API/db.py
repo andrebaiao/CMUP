@@ -21,9 +21,9 @@ db.session.commit()
 
 # Create pills
 patient_id = Patient.query.get(1).id
-pill_1 = Pill(name='Isotretioína', quantity=1, day=Day.MON, part_of_day=PartOfDay.DIN, patient_id=patient_id)
-pill_2 = Pill(name='Isotretioína', quantity=1, day=Day.WED, part_of_day=PartOfDay.DIN, patient_id=patient_id)
-pill_3 = Pill(name='Isotretioína', quantity=1, day=Day.FRI, part_of_day=PartOfDay.DIN, patient_id=patient_id)
+pill_1 = Pill(name='Isotretinoin', quantity=1, day=Day.MON, part_of_day=PartOfDay.DIN, patient_id=patient_id)
+pill_2 = Pill(name='Isotretinoin', quantity=1, day=Day.WED, part_of_day=PartOfDay.DIN, patient_id=patient_id)
+pill_3 = Pill(name='Isotretinoin', quantity=1, day=Day.FRI, part_of_day=PartOfDay.DIN, patient_id=patient_id)
 
 db.session.add(pill_1)
 db.session.add(pill_2)
