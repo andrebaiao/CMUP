@@ -6,3 +6,4 @@ Flask-Script==2.0.6
 Flask-SQLAlchemy==2.5.1
 Werkzeug==2.0.1
 PyJWT==2.1.0
+ordered-enum==0.0.6

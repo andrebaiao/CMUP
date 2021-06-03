@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from utils import Day, PartOfDay
 
+
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
 
@@ -40,3 +41,14 @@ class Pill(db.Model):
     def __repr__(self):
         return f"Pills ({self.id}, {self.name}, {self.day}, {self.part_of_day}, " \
                f"{self.quantity})"
+
+
+class TakingPills(db.Model):
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False, primary_key=True)
+    date = db.Column(db.DateTime, nullable=False, primary_key=True)
+    part_of_day = db.Column(db.Enum(PartOfDay), nullable=False,
+                            primary_key=True)  # BREAKFAST, LUNCH, DIN, NIGHT(BEFORE SLEEP)
+    day = db.Column(db.Enum(Day), nullable=False)
+
+    def __repr__(self):
+        return f"Took Pills ({self.patient_id}, {self.date}, {self.part_of_day}, {self.day})"

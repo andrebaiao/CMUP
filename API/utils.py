@@ -1,4 +1,4 @@
-from enum import Enum
+from ordered_enum import OrderedEnum
 import json
 from sqlalchemy.ext.declarative import DeclarativeMeta
 
@@ -8,7 +8,7 @@ ERROR = 500
 FORBIDDEN = 403
 
 
-class Day(Enum):
+class Day(OrderedEnum):
     MON = 1
     TUE = 2
     WED = 3
@@ -18,7 +18,7 @@ class Day(Enum):
     SUN = 7
 
 
-class PartOfDay(Enum):
+class PartOfDay(OrderedEnum):
     BRK = 1
     LUN = 2
     DIN = 3
@@ -42,3 +42,23 @@ class AlchemyEncoder(json.JSONEncoder):
             return fields
 
         return json.JSONEncoder.default(self, obj)
+
+
+def convertHourToPartOfDay(takePill_date):
+    hour = takePill_date.hour
+
+    if 7 <= hour <= 10:
+        return PartOfDay(1)
+
+    if 12 <= hour <= 15:
+        return PartOfDay(2)
+
+    if 18 <= hour <= 21:
+        return PartOfDay(3)
+
+    return PartOfDay(4)
+
+def getDayOnWeek(takePill_date):
+    day = takePill_date.strftime("%a").upper()
+    return Day[day]
+
