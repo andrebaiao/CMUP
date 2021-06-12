@@ -27,7 +27,7 @@ class Patient(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
-        return f"{{ name: {self.name}, age: {self.age} }}"
+        return f"{{ name: {self.name}, age: {self.age}, pills: {self.pills} }}"
 
 
 class Pill(db.Model):
@@ -49,6 +49,7 @@ class TakingPills(db.Model):
     part_of_day = db.Column(db.Enum(PartOfDay), nullable=False,
                             primary_key=True)  # BREAKFAST, LUNCH, DIN, NIGHT(BEFORE SLEEP)
     day = db.Column(db.Enum(Day), nullable=False)
-
+    take = db.Column(db.Boolean, default=True)
+    
     def __repr__(self):
-        return f"Took Pills ({self.patient_id}, {self.date}, {self.part_of_day}, {self.day})"
+        return f"Took Pills ({self.patient_id}, {self.date}, {self.part_of_day}, {self.day}, {self.take})"

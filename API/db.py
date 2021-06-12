@@ -43,6 +43,19 @@ part_of_day_2 = convertHourToPartOfDay(datetime2)
 day_2 = getDayOnWeek(datetime2)
 takingPill_2 = TakingPills(patient_id=patient_id, date=datetime2, part_of_day=part_of_day_2, day=day_2)
 
+datetime3 = datetime.datetime(2021, 6, 4, 21, 33, 30, 62371)
+part_of_day_3 = convertHourToPartOfDay(datetime3)
+day_3 = getDayOnWeek(datetime3)
+takingPill_3 = TakingPills(patient_id=patient_id, date=datetime3, part_of_day=part_of_day_3, day=day_3, take=False)
+
+datetime4 = datetime.datetime(2021, 6, 7, 22, 33, 30, 62371)
+part_of_day_4 = convertHourToPartOfDay(datetime3)
+day_4 = getDayOnWeek(datetime3)
+takingPill_4 = TakingPills(patient_id=patient_id, date=datetime4, part_of_day=part_of_day_4, day=day_4, take=False)
+
+
 db.session.add(takingPill_1)
 db.session.add(takingPill_2)
+db.session.add(takingPill_3)
+db.session.add(takingPill_4)
 db.session.commit()

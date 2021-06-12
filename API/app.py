@@ -3,19 +3,23 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 import jwt
+from flask_cors import CORS, cross_origin
 from utils import SUCCESS, CREATED, ERROR, FORBIDDEN, AlchemyEncoder, Day, PartOfDay
 from models import User, Patient, Pill, TakingPills
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
 app.config['SECRET_KEY'] = 'dca3f75a-3590-4da6-a9bc-5ace72ad3129'
+cors = CORS(app)
 db = SQLAlchemy(app)
 
 
 def token_required(func):
     @wraps(func)
     def decorated(*args, **kwargs):
-        token = request.get_json()['token']
+
+        token = request.headers.get('Authorization')
+
         if not token:
             return jsonify({'ERROR': 'Token is missing', "status": FORBIDDEN})
         try:
@@ -28,6 +32,7 @@ def token_required(func):
 
 
 @app.route('/signup', methods=['POST'])
+@cross_origin()
 def signup_post():
     body_data = request.get_json()
     username = body_data['username']
@@ -47,6 +52,7 @@ def signup_post():
 
 
 @app.route('/login', methods=['POST'])
+@cross_origin()
 def login_post():
     body_data = request.get_json()
     username = body_data['username']
@@ -71,6 +77,7 @@ def login_post():
 
 
 @app.route('/logout')
+@cross_origin()
 def logout():
     # remove the username from the session if it's there
     session.pop('user_id', None)
@@ -78,7 +85,8 @@ def logout():
     return jsonify({"message": "Successfully logout!", "status": SUCCESS})
 
 
-@app.route('/patients', methods=['POST'])
+@app.route('/patients', methods=['GET'])
+@cross_origin()
 @token_required
 def patients_get():
     user_id = session['user_id']
@@ -86,12 +94,42 @@ def patients_get():
 
     # TODO: clean the fields
     patients = json.dumps(user.patients, cls=AlchemyEncoder)
-
+    
     return jsonify({"message": patients, "status": SUCCESS})
 
 
-# TODO: pode ser passado para um função, para se usar na função cronjob
 @app.route('/patients/<user_id>', methods=['GET'])
+@token_required
+@cross_origin()
+def patient_pill(user_id):
+    
+    pills_to_take = Pill.query.filter_by(patient_id=user_id).all()
+
+    pills = []
+
+    for pill in pills_to_take:
+        pills.append({"id": pill.id, "name": pill.name, "quantity": pill.quantity, \
+                        "day": Day(pill.day).value, "part_of_day": PartOfDay(pill.part_of_day).value})
+
+    pills_took = TakingPills.query.filter_by(patient_id=user_id).all()
+    total_pills_took = 0
+    pills_not_took = []
+    
+    for pill in pills_took:
+        if pill.take:
+            total_pills_took += 1
+        else:
+            pills_not_took.append({"patient_id" : pill.patient_id, "date": pill.date.strftime("%d %B %Y %A %H:%M:%S")})
+
+    pills = json.dumps(pills, cls=AlchemyEncoder)
+    pills_not_took = json.dumps(pills_not_took, cls=AlchemyEncoder)
+
+    return jsonify({"message": { "treatment": pills, "total_pills_took": total_pills_took, "pills_not_took": pills_not_took }, "status": SUCCESS})
+
+
+# TODO: pode ser passado para um função, para se usar na função cronjob
+@app.route('/patients/nextpill/<user_id>', methods=['GET'])
+@cross_origin()
 def next_pill(user_id):
 
     last_took_pill = TakingPills.query.filter_by(patient_id=user_id)[-1]
