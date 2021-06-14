@@ -40,7 +40,17 @@ import routes from "routes.js";
 
 function Header(props) {
 
-  function clickLogout(){
+  async function clickLogout(){
+
+    let url = "http://localhost:9000/logout"
+    
+    let data = await fetch(url, {
+      method: 'GET',
+      headers: new Headers({
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('token')
+      })
+    });
 
     localStorage.setItem("login", "false");
     localStorage.setItem("token", "");

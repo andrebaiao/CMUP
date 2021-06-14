@@ -69,19 +69,6 @@ function Sidebar(props) {
       </div>
       <div className="sidebar-wrapper" ref={sidebar}>
         <Nav>
-              <li
-                className="menuitems"
-                key="0"
-              >
-                <NavLink
-                  to="/admin/dashboard"
-                  className="nav-link"
-                  activeClassName="active"
-                >
-                  <i className="nc-icon nc-sound-wave" />
-                  <p>Dashboard</p>
-                </NavLink>
-              </li>
                 <li
                 className="menuitems"
                 key="1"
@@ -92,20 +79,21 @@ function Sidebar(props) {
                   activeClassName="active"
                 >
                   <i className="nc-icon nc-watch-time" />
-                  <p>Patients</p>
+                  <p>Dashboard</p>
                 </NavLink>
               </li>
+
               <li
                 className="menuitems"
-                key="2"
+                key="1"
               >
                 <NavLink
-                  to="/admin/icons"
+                  to="/admin/create_patient"
                   className="nav-link"
                   activeClassName="active"
                 >
-                  <i className="nc-icon nc-diamond" />
-                  <p>Icons</p>
+                  <i className="nc-icon nc-simple-add" />
+                  <p>New Patient</p>
                 </NavLink>
               </li>
               

@@ -36,7 +36,7 @@ if(localStorage.getItem("login") == "true"){
     <BrowserRouter>
       <Switch>
         <Route path="/admin" render={(props) => <AdminLayout {...props} />} />
-        <Redirect to="/admin/dashboard" />
+        <Redirect to="/admin/patient/scheduler" />
         
       </Switch>
     </BrowserRouter>,
