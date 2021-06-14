@@ -20,49 +20,22 @@ import {
 } from "reactstrap";
 
 
-const convertDayInt = {
-  "Monday": 0,
-  "Tuesday": 1,
-  "Wednesday": 2,
-  "Thrusday": 3,
-  "Friday": 4,
-  "Saturday": 5,
-  "Sunday": 6
-
+const convertIntPartOfDay = {
+  1: "BreakFast",
+  2: "Lunch",
+  3: "Dinner",
+  4: "Night"
 }
 
-const dashboardChart = {
-  data: {
-      labels: [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thrusday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-      ],
-      datasets: [
-        {
-          data: [, , , , , , ,],
-          fill: false,
-          borderColor: "transparent",
-          backgroundColor: "transparent",
-          pointBorderColor: "#b03217",
-          pointRadius: 4,
-          pointHoverRadius: 4,
-          pointBorderWidth: 8,
-          tension: 0.4,
-        }
-      ],
-    },
-  options: {
-    plugins: {
-      legend: { display: false },
-    },
-  },
-};
-
+const convertIntDay = {
+  1: "Monday",
+  2: "Tuesday",
+  3: "Wednesday",
+  4: "Thrusday",
+  5: "Friday",
+  6: "Saturday",
+  7: "Sunday"
+}
 
 export default class BasicTable extends React.Component {
 
@@ -73,49 +46,25 @@ export default class BasicTable extends React.Component {
         total_pills: 0,
         total_pills_took: 0,
         total_pills_not_took: 0,
-        data_chart: {
-
-          data: {
-            labels: [
-              "Monday",
-              "Tuesday",
-              "Wednesday",
-              "Thrusday",
-              "Friday",
-              "Saturday",
-              "Sunday",
-            ],
-            datasets: [
-              {
-                data: [, , , , , , ,],
-                fill: false,
-                borderColor: "transparent",
-                backgroundColor: "transparent",
-                pointBorderColor: "#b03217",
-                pointRadius: 3,
-                pointHoverRadius: 4,
-                pointBorderWidth: 8,
-                tension: 0.4,
-              }
-            ],
-          },
-        options: {
-          plugins: {
-            legend: { display: false },
-          },
-        },
-
-        }
+        patients : [],
+        pills_not_took: [],
+        next_pill: {},
+        name_patient: ""
     }
 
     this.getPatientData = this.getPatientData.bind(this);
-    this.createData = this.createData.bind(this)
-    this.data = {}
+    this.createData = this.createData.bind(this);
+    this.getPatients = this.getPatients.bind(this);
+    this.data = {};
+    this.getNextPill = this.getNextPill.bind(this);
+    this.newPatient = this.newPatient.bind(this);
     
   }
 
   componentDidMount() {
-
+    localStorage.setItem("patient_id", 1);
+    this.getPatients();
+    this.getNextPill();
     this.cleanData();
   }
 
@@ -125,11 +74,34 @@ export default class BasicTable extends React.Component {
     return { part_of_day, monday, tuesday, wednesday, thrusday, friday, saturday, sunday };
   }
 
+
+  async getPatients(){
+
+    let url = "http://localhost:9000/patients/medic/" + localStorage.getItem("user_id");
+
+    let data = await fetch(url, {
+      method: 'GET',
+      headers: new Headers({
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('token')
+      })
+    });
+
+    let response = await data.json();
+    
+    let resp_patients = JSON.parse(response["message"]);
+
+
+    this.setState({
+      patients: resp_patients,
+      name_patient: resp_patients[0].name
+    });
+
+  }
+
+
   async getPatientData(){
 
-    console.log("Chamei funçao getPatientData");
-
-    localStorage.setItem("patient_id", 1);
     let patient_id = localStorage.getItem("patient_id");
 
     let url = "http://localhost:9000/patients/" + patient_id;
@@ -151,6 +123,7 @@ export default class BasicTable extends React.Component {
     result["treatment"] = JSON.parse(response.message.treatment);
     result["total_pills_not_took"]  = result["pills_not_took"].length;
     result["total_pills_took"] = JSON.parse(response.message.total_pills_took);
+    
 
     this.setState({
       total_pills: result["total_pills_not_took"] + result["total_pills_took"],
@@ -159,23 +132,45 @@ export default class BasicTable extends React.Component {
     })
 
     
-    result["pills_not_took"].map((p) => {
-
-      let pill_split = p.date.split(" ");
-      let partofday = pill_split[3];
-      partofday = convertDayInt[partofday];
-      let hour = pill_split[4].split(":")[0];
-      dashboardChart.data.datasets[0].data[partofday] = hour;
-      
-    })
 
     this.setState({
-      data_chart: dashboardChart
+      pills_not_took: result["pills_not_took"],
+      name_patient: response.message.name
     })
+
+    console.log(this.state.name_patient);
 
 
     return result;
   };
+
+  async getNextPill(){
+
+
+    let url = "http://localhost:9000/patients/nextpill/" + localStorage.getItem("patient_id");
+
+
+
+    let data = await fetch(url, {
+      method: 'GET',
+      headers: new Headers({
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('token')
+      })
+    });
+
+
+    let response = await data.json();
+
+    response = JSON.parse(response["message"]);
+    response.day = convertIntDay[response.day];
+    response["part_of_day"] = convertIntPartOfDay[response["part_of_day"]];
+
+    this.setState({
+      next_pill: response
+    })
+
+  }
 
 
   async cleanData(){
@@ -185,7 +180,6 @@ export default class BasicTable extends React.Component {
     this.getPatientData().then((res)=>{
 
       this.data = res;
-
 
       let parts_of_day = ["BreakFast", "Lunch", "Dinner", "Night"];
 
@@ -205,12 +199,17 @@ export default class BasicTable extends React.Component {
       this.setState({
         my_rows: my_data
       })
-
-      console.log(this.data)
+      this.forceUpdate();
 
     });
 
 
+  }
+
+  async newPatient(id){
+    localStorage.setItem("patient_id", id);
+    this.getNextPill();
+    this.cleanData();
   }
 
   render() {
@@ -218,17 +217,20 @@ export default class BasicTable extends React.Component {
     return (
       <>
           <div className="content">
-          <UncontrolledDropdown>
+          <UncontrolledDropdown group>
                   <DropdownToggle caret>
-                      Patient1 Luis
+                      {this.state.name_patient} - Select the patient 
                   </DropdownToggle>
                   <DropdownMenu>
-                      <DropdownItem>Patient2 Andre</DropdownItem>
-                      <DropdownItem>Patient3 Joao</DropdownItem>
-                      <DropdownItem>Something Jose</DropdownItem>
+                      {this.state.patients.map( (row) => {
+                        return (
+                          <DropdownItem onClick={() => {this.newPatient(row.id)}}>{row.id} {row.name}</DropdownItem>
+                        )
+                      } )}
                   </DropdownMenu>
               </UncontrolledDropdown>
               <Row style={{marginTop:"70px"}}></Row>
+              <h3>{this.state.name_patient} - Treatment</h3>
               <TableContainer component={Paper}>
               <Table aria-label="simple table" style={{minWidth: 650}}>
                   <TableHead>
@@ -328,26 +330,61 @@ export default class BasicTable extends React.Component {
                   </Card>
                 </Col>
             </Row>
-            <Row style={{marginTop:"70px"}}></Row>
-            <Row>
-            <Col md="8" style={{marginLeft:"15%"}}>
-            <Card className="card-chart">
-              <CardHeader>
-                <CardTitle tag="h5">Last Week</CardTitle>
-                <p className="card-category">Alerts by pill not taken</p>
-              </CardHeader>
-              <CardBody>
-                <Line
-                  data={this.state.data_chart.data}
-                  options={this.state.data_chart.options}
-                  width={400}
-                  height={100}
-                />
-              </CardBody>
-        
-            </Card>
-          </Col>
-            </Row>
+          <Row style={{marginTop:"70px"}}></Row>
+          <Row>
+            <Col md="7" style={{marginLeft:"20%"}}>
+              <h4 style={{color:"red", textAlign:"center"}}><b>Alarms</b></h4>
+              <TableContainer component={Paper}>
+                <Table aria-label="simple table" >
+                <TableHead>
+                      <TableRow>
+                          <TableCell align="center" >Day</TableCell>
+                          <TableCell align="center" >Hour</TableCell>
+                      </TableRow>
+                      </TableHead>
+                      <TableBody>
+                    {this.state.pills_not_took.map((row, i)=>{
+                      let my_split = row.date.split(" ");
+                      let day = my_split[0] + " " + my_split[1] + " " + my_split[2] + " - " + my_split[3];
+                      let hour = my_split[(my_split.length - 1)];
+                      
+                      return(
+                        <TableRow key={i}>
+                          <TableCell align="center">{day}</TableCell>
+                          <TableCell align="center">{hour}</TableCell>
+                        </TableRow>
+                      )
+                    })}          
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Col>
+          </Row>
+          <Row style={{marginTop:"70px"}}></Row>
+          <Row>
+            <Col lg="3" md="6" sm="6" style={{marginLeft: "35%"}}>
+                <Card className="card-stats">
+                  <CardBody>
+                    <Row>
+                      <Col md="4" xs="5">
+                        <div className="icon-big text-center icon-success" style={{marginTop: "10%"}}>
+                          <i className="nc-icon nc-minimal-right text-success" />
+                        </div>
+                      </Col>
+                      <Col md="8" xs="7">
+                        <div className="numbers">
+                          <p className="card-category"> Next Pill </p>
+                          <CardTitle tag="p">{this.state.next_pill.quantity} {this.state.next_pill.name} <br></br> {this.state.next_pill.day} {this.state.next_pill.part_of_day}</CardTitle>
+                          <p />
+                        </div>
+                      </Col>
+                    </Row>
+                  </CardBody>
+                </Card>
+              </Col>
+          </Row>
+
+
           </div>
         
           

@@ -25,6 +25,7 @@ import Maps from "views/Map.js";
 import Signin from "views/Login.js";
 import UserPage from "views/User.js";
 import BasicTable from "views/Scheduler.js";
+import NewPatient from "views/NewPatient.js";
 
 var routes = [
   {
@@ -85,8 +86,14 @@ var routes = [
   },
   {
     path: "/patient/scheduler",
-    name: "Scheduler",
+    name: "Dashboard",
     component: BasicTable,
+    layout: "/admin",
+  },
+  {
+    path: "/create_patient",
+    name: "Create new patient",
+    component: NewPatient,
     layout: "/admin",
   },
 ];

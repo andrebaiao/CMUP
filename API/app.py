@@ -72,12 +72,13 @@ def login_post():
         app.config['SECRET_KEY'],
         algorithm="HS256"
     )
-
-    return jsonify({"message": "Successfully logged in!", "token": token, "status": SUCCESS})
+    print(session)
+    return jsonify({"message": "Successfully logged in!", "user_id": user.id ,"token": token, "status": SUCCESS})
 
 
 @app.route('/logout')
 @cross_origin()
+@token_required
 def logout():
     # remove the username from the session if it's there
     session.pop('user_id', None)
@@ -85,12 +86,13 @@ def logout():
     return jsonify({"message": "Successfully logout!", "status": SUCCESS})
 
 
-@app.route('/patients', methods=['GET'])
+@app.route('/patients/medic/<medic_id>', methods=['GET'])
 @cross_origin()
 @token_required
-def patients_get():
-    user_id = session['user_id']
-    user = User.query.filter_by(id=user_id).first()
+def patients_get(medic_id):
+    
+    #user_id = session['user_id']
+    user = User.query.filter_by(id=medic_id).first()
 
     # TODO: clean the fields
     patients = json.dumps(user.patients, cls=AlchemyEncoder)
@@ -98,12 +100,14 @@ def patients_get():
     return jsonify({"message": patients, "status": SUCCESS})
 
 
-@app.route('/patients/<user_id>', methods=['GET'])
+@app.route('/patients/<patient_id>', methods=['GET'])
 @token_required
 @cross_origin()
-def patient_pill(user_id):
+def patient_pill(patient_id):
     
-    pills_to_take = Pill.query.filter_by(patient_id=user_id).all()
+    name_patient = Patient.query.filter_by(id=patient_id).first().name
+
+    pills_to_take = Pill.query.filter_by(patient_id=patient_id).all()
 
     pills = []
 
@@ -111,7 +115,7 @@ def patient_pill(user_id):
         pills.append({"id": pill.id, "name": pill.name, "quantity": pill.quantity, \
                         "day": Day(pill.day).value, "part_of_day": PartOfDay(pill.part_of_day).value})
 
-    pills_took = TakingPills.query.filter_by(patient_id=user_id).all()
+    pills_took = TakingPills.query.filter_by(patient_id=patient_id).all()
     total_pills_took = 0
     pills_not_took = []
     
@@ -124,33 +128,82 @@ def patient_pill(user_id):
     pills = json.dumps(pills, cls=AlchemyEncoder)
     pills_not_took = json.dumps(pills_not_took, cls=AlchemyEncoder)
 
-    return jsonify({"message": { "treatment": pills, "total_pills_took": total_pills_took, "pills_not_took": pills_not_took }, "status": SUCCESS})
+    return jsonify({"message": { "treatment": pills, "total_pills_took": total_pills_took, "pills_not_took": pills_not_took, "name": name_patient }, "status": SUCCESS})
 
 
 # TODO: pode ser passado para um função, para se usar na função cronjob
-@app.route('/patients/nextpill/<user_id>', methods=['GET'])
+@app.route('/patients/nextpill/<patient_id>', methods=['GET'])
 @cross_origin()
-def next_pill(user_id):
+def next_pill(patient_id):
 
-    last_took_pill = TakingPills.query.filter_by(patient_id=user_id)[-1]
-    pills_to_take = Pill.query.filter_by(patient_id=user_id).all()
-    print(last_took_pill)
+    pills_to_take = Pill.query.filter_by(patient_id=patient_id).all()
+    #print(last_took_pill)
     pills_to_take = sorted(pills_to_take, key=lambda d: (d.day, d.part_of_day))
     #print(pills_to_take)
 
-    index = 0
-    for pill in pills_to_take:
-        if pill.day == last_took_pill.day and pill.part_of_day and last_took_pill.part_of_day:
-            break
-        index += 1
 
-    # if last_took_pill was the last pill in the week
-    if (index + 1) == len(pills_to_take):
-        index = - 1
 
-    print(pills_to_take[index + 1])
-    return user_id
+    pills_took = TakingPills.query.filter_by(patient_id=patient_id).all()
 
+    print(pills_took)
+    print(type(pills_took))
+
+    if len(pills_took) == 0:
+        index = -1
+    else:
+        last_took_pill = pills_took[-1]
+
+        index = 0
+        for pill in pills_to_take:
+            if pill.day == last_took_pill.day and pill.part_of_day and last_took_pill.part_of_day:
+                break
+            index += 1
+
+        # if last_took_pill was the last pill in the week
+        if (index + 1) == len(pills_to_take):
+            index = - 1
+
+    #print(pills_to_take[index + 1])
+    pills_to_take = {"id": pills_to_take[index + 1].id, "name": pills_to_take[index + 1].name, "quantity": pills_to_take[index + 1].quantity, \
+                        "day": Day(pills_to_take[index + 1].day).value, "part_of_day": PartOfDay(pills_to_take[index + 1].part_of_day).value}
+
+    pills_to_take = json.dumps(pills_to_take, cls=AlchemyEncoder)
+
+    return jsonify({"message": pills_to_take, "status": SUCCESS})
+
+
+@app.route('/new_patient', methods=['POST'])
+@token_required
+@cross_origin()
+def create_new_treatment():
+
+    body_data = request.get_json()
+    name = body_data['name']
+    age = body_data['age']
+    medic_id = body_data['user_id']
+    pills = body_data['pills']
+
+    # create patient
+    new_patient = Patient(name=name, age=age, user_id=medic_id)
+
+    db.session.add(new_patient)
+    db.session.commit()
+
+    # add his pills
+    patient_id = Patient.query.order_by(Patient.id.desc()).first().id
+    
+    for pill in pills:
+        pill["day"] = Day(pill["day"])
+        pill["part_of_day"] = PartOfDay(pill["part_of_day"])
+        new_pill = Pill(name=pill["name"], quantity=pill["quantity"], \
+                        day=pill["day"], part_of_day=pill["part_of_day"], \
+                        patient_id=patient_id)
+
+        db.session.add(new_pill)
+
+    db.session.commit()
+
+    return jsonify({"message": "New patient added with success", "status": SUCCESS})
 
 app.run(host='localhost', port=9000)
 

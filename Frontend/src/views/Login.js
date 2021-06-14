@@ -20,19 +20,22 @@ function Login() {
     const[ username, setUsername ] = useState('');
     const[ password, setPassword ] = useState('');
 
+
+    const [msg, setMsg] = useState('')
+
     async function handleSubmit(e){
         e.preventDefault();
 
         const message = { username, password };
         const url = "http://localhost:9000/login";
-        console.log("enviei " + JSON.stringify(message));
+        
 
         let data = await fetch(url, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({"username": "medic1", "password": "medic1"}),
+            body: JSON.stringify({"username": username, "password": password}),
         });
 
         let response = await data.json();
@@ -40,9 +43,14 @@ function Login() {
         if (response.status == 200){
             console.log("Login with success! Token " + response.token);
             localStorage.setItem("token", response.token);
+            localStorage.setItem("user_id", response["user_id"]);
             localStorage.setItem("login", "true");
-            window.location.replace("http://localhost:3000/admin/dashboard");
+            window.location.replace("http://localhost:3000/admin/patient/scheduler");
+        } else {
+          setMsg('Credentials invalid! Try Again...');
         }
+
+        
     }
 
   return (
@@ -77,6 +85,8 @@ function Login() {
                     <Button theme="accent"  style={{marginLeft: "70px", marginTop:"30px"}}>Log in</Button>
                 
                     <Button theme="accent" style={{marginLeft: "20px", marginTop:"30px"}}>Sign Out</Button>
+
+                    <p style={{color:"red", marginTop: "5%px", marginLeft: "5%"}}>{msg}</p>
                 </Col>
                 
             </Form>
@@ -86,46 +96,3 @@ function Login() {
 }
 
 export default Login;
-
-/*
- <form className={classes.form} noValidate>
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
-          />
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-          />
-
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            className={classes.submit}
-          >
-            Sign In
-          </Button>
-        </form>
-      </div>
-      <Box mt={8}>
-        <Copyright />
-      </Box>
-    </Container>
-  );
-*/
