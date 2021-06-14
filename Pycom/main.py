@@ -65,7 +65,8 @@ def removeAlarm(timemark: tuple):
         al = alarms_palarm.pop(index)
         al.cancelAlarm()
 
-
+""" Threads """
+""" Downlink Receiver """
 def threadWork():
     sct = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
     sct.setsockopt(socket.SOL_LORA, socket.SO_DR, 5)
