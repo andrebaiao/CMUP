@@ -14,6 +14,11 @@ from machine import RTC
 import utime
 from PAlarm import PAlarm
 
+""" Setup Variables - Must be Set/verified before every run """
+                #   Y    M   D   H   m
+setup_start_time = (2021, 6, 14, 12, 20, 0, 0, 0)
+setup_time_slots = {(0, 12,30) : Pin('P10', mode = Pin.IN), (0,18,30) : Pin('P9', mode = Pin.IN)} # <weekday [0-6 / mon-sun], hour [0-23], minute [0-60]>
+
 """ Global Vars """
 rtc = RTC()
 
@@ -29,7 +34,7 @@ def changeLED(color):
 
 def blinkLED():
     with color_lock:
-        for i in range(15):
+        for _ in range(5):
             pycom.rgbled(0xff0000)
             time.sleep(0.4)
             pycom.rgbled(0x888888)
@@ -45,14 +50,25 @@ def addAlarm(timemark: tuple, weekly = False):
             index+=1
             if a.getSchedule() == timemark:
                 if a.isWeekly():
-                    return
+                    return False
                 else:
                     break
         print("ListaA: ", alarms_palarm)
+
+        t_pin = None
+        for times in sorted(setup_time_slots.keys()):
+            if timemark[0] == times[0] and 0 <= timemark[1] - times[1] <= 3:
+                print("fica: ", times, setup_time_slots[times])
+                t_pin = setup_time_slots[times]
+                break
         
-        alarms_palarm.pop(index)
-        alarms_palarm.append( PAlarm(10, timemark, weekly, blinkLED, addAlarm) )
+        if not t_pin:
+            return False
+        
+        alarms_palarm.pop(index)    # TODO: por seconds of a week
+        alarms_palarm.append( PAlarm(10, timemark, weekly, blinkLED, addAlarm, t_pin) )
         print("ListaD: ", alarms_palarm)
+        return True
 
 def removeAlarm(timemark: tuple):
     index = -1
@@ -82,15 +98,12 @@ def threadWork():
             #interpret data
             data = int.from_bytes(msg, 'little')
             print("msg: ", data)
+
+            # check if slot available before creating alarm (maybe send confirmation msg?)
         except:
             pass
 
 def initiate():
-
-    print("Initiating...")
-    # DS18B20 data line connected to pin P10
-    ow = OneWire(Pin('G16'))
-    d = DS18X20(ow)
 
     lora = LoRa(mode=LoRa.LORAWAN)
 
@@ -117,13 +130,7 @@ def initiate():
     _thread.start_new_thread(threadWork, ())
 
     while True:
-        #create message
-        d.start_conversion()
         time.sleep(1)
-        """ temperature=10
-        #temperature = d.read_temp_async()
-        print(temperature)
-        msg = (int(temperature*100)).to_bytes(4, 'little') """
 
         type = 3
         day = 6
@@ -152,8 +159,7 @@ def initiate():
 
 def setClock():
 
-            #   Y   M   D   H   m
-    rtc.init((2021, 6, 14, 12, 20, 0, 0, 0))    # Has to be updated every run :D
+    rtc.init(setup_start_time)
 
     print(rtc.now())
     print(utime.gmtime())
@@ -162,12 +168,14 @@ def setClock():
     print(utime.mktime(rtc.now()) - utime.mktime((2021, 6, 14, 12, 21, 0, 0, 0)))
     
     print("Lista: ", alarms_palarm)
-    a = PAlarm( utime.mktime((2021, 6, 14, 12, 21, 0, 0, 0)) - utime.mktime(rtc.now()), (4,15,30), False, blinkLED, addAlarm)
+    a = PAlarm( utime.mktime((2021, 6, 14, 12, 21, 0, 0, 0)) - utime.mktime(rtc.now()), (0,15,30), False, blinkLED, addAlarm, setup_time_slots[(0, 12,30)])
+    
     alarms_palarm.append(a)
     print("Lista: ", alarms_palarm)
 
 if __name__ == "__main__":
     pycom.heartbeat(False)
 
+    print("Initiating...")
     setClock()
     #initiate()

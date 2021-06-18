@@ -1,0 +1,12 @@
+http://hobbycomponents.com/images/forum/Hall_Effect_Sensor_Module_HCSENS0021.png
+https://docs.pycom.io/gitbook/assets/lopy4-pinout.png
+https://forum.pycom.io/topic/606/mapping-g-and-p-pin-numbers/3
+https://docs.pycom.io/firmwareapi/pycom/machine/pin/
+https://docs.pycom.io/tutorials/basic/gpio/
+https://www.tinytronics.nl/shop/en/sensors/magnetic-field/hall-effect-switch-module
+https://www.mpja.com/download/a3144eul.pdf
+https://docs.pycom.io/datasheets/notes/
+https://content.instructables.com/ORIG/FXN/4AE8/IRG4HTTS/FXN4AE8IRG4HTTS.jpg?auto=webp
+https://www.instructables.com/How-to-Use-a-Magnetic-Door-Switch-Sensor-With-Ardu/
+
+

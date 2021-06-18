@@ -3,6 +3,8 @@ import base64
 import json
 import pprint
 
+from luand import decodePayload
+
 server = "eu.thethings.network"
 up_topic = '+/devices/+/up'
 user = "app_02" #Application ID
