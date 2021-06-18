@@ -13,6 +13,7 @@ import _thread
 from machine import RTC
 import utime
 from PAlarm import PAlarm
+import luand
 
 """ Setup Variables - Must be Set/verified before every run """
                 #   Y    M   D   H   m
@@ -136,19 +137,9 @@ def initiate():
         day = 6
         hour = 24
         min = 60
-        ########
-        payload_meta = 0
-        payload_meta |= ( type << 14 )
-        print(payload_meta)
 
-        payload_meta |= ( day << 11 )
-        print(payload_meta)
+        msg = luand.encodePayload(type, day, hour, min, 1).to_bytes(3, 'little')
 
-        payload_meta |= ( hour << 6 )
-        print(payload_meta)
-
-        payload_meta |= ( min << 0 )
-        msg = payload_meta.to_bytes(2, 'little')
         print(msg)
         
         pycom.rgbled(0x0000ff)
@@ -177,5 +168,5 @@ if __name__ == "__main__":
     pycom.heartbeat(False)
 
     print("Initiating...")
-    setClock()
-    #initiate()
+    #setClock()
+    initiate()

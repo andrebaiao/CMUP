@@ -24,7 +24,7 @@ def encodePayload(m_type, day, hour, minute, flag, delay=0):
     return payload_all
 
 
-def decodePayload(payload: bytes):
+def decodePayload(payload: bytes):  # Note: assumes 3 bytes
     unbyted = int.from_bytes(payload, "little")
 
     u_type = ((((2 ** 2) - 1) << 22) & unbyted) >> 22
