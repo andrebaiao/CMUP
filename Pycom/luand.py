@@ -45,3 +45,6 @@ def decodePayload(payload: bytes):  # Note: assumes 3 bytes
 if __name__ == "__main__":
     print(encodePayload(3, 6, 24, 60, 1, 120))
     print(decodePayload(encodePayload(3, 6, 24, 60, 1, 120).to_bytes(3, 'little')))
+
+
+    print(encodePayload(3, 0, 7, 15, 0, 0))
