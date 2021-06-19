@@ -32,22 +32,13 @@ def on_message():
 	flag = int(msg[4])
 	patient_id = 1
 
-	if flag == 0:
-		pload = {
+	pload = {
 			"patient_id": patient_id,
 			"day": day,
 			"hour": hour,
 			"minu": minu,
-			"take": True
-		}
-	else: 
-		pload = {
-			"patient_id": patient_id,
-			"day": day,
-			"hour": hour,
-			"minu": minu,
-			"take": False
-		}
+			"take": True if flag == 0 else False
+	}
 
 	r = requests.post('http://localhost:9000/takepill',data = pload)
 
