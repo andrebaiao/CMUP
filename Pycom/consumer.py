@@ -28,16 +28,26 @@ def on_message():
 	#msg = (1, 2, 10, 0, 3, 10)
 	day = int(msg[1]) + 1
 	hour = msg[2]
-	minu = int(msg[3]) + int(msg[4])
+	minu = int(msg[3]) + int(msg[5])
+	flag = int(msg[4])
 	patient_id = 1
 
-	pload = {
-		"patient_id": patient_id,
-		"day": day,
-		"hour": hour,
-		"minu": minu,
-		"take": True
-	}
+	if flag == 0:
+		pload = {
+			"patient_id": patient_id,
+			"day": day,
+			"hour": hour,
+			"minu": minu,
+			"take": True
+		}
+	else: 
+		pload = {
+			"patient_id": patient_id,
+			"day": day,
+			"hour": hour,
+			"minu": minu,
+			"take": False
+		}
 
 	r = requests.post('http://localhost:9000/takepill',data = pload)
 
