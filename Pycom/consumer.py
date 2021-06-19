@@ -51,8 +51,6 @@ def on_message():
 
 	r = requests.post('http://localhost:9000/takepill',data = pload)
 
-	print(r.text)
-
 
 mqttc = mqtt.Client()
 mqttc.username_pw_set(user,password)
