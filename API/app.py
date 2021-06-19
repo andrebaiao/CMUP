@@ -4,9 +4,11 @@ from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 import jwt
 from flask_cors import CORS, cross_origin
-from utils import SUCCESS, CREATED, ERROR, FORBIDDEN, AlchemyEncoder, Day, PartOfDay, convertHourToPartOfDay
+from utils import SUCCESS, CREATED, ERROR, FORBIDDEN, AlchemyEncoder, Day, PartOfDay, convertHourToPartOfDay, HOUR_PARTOFDAY, encodePayload
 from models import User, Patient, Pill, TakingPills
 import datetime
+import base64
+import requests
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
@@ -142,8 +144,6 @@ def next_pill(patient_id):
     pills_to_take = sorted(pills_to_take, key=lambda d: (d.day, d.part_of_day))
     #print(pills_to_take)
 
-
-
     pills_took = TakingPills.query.filter_by(patient_id=patient_id).all()
 
     print(pills_took)
@@ -201,6 +201,7 @@ def create_new_treatment():
                         patient_id=patient_id)
 
         db.session.add(new_pill)
+        ttn((pill["day"].value - 1), HOUR_PARTOFDAY[pill["part_of_day"]])
 
     db.session.commit()
 
@@ -230,6 +231,27 @@ def takepill():
     db.session.commit()
 
     return jsonify({"message": " Take Pill Record with success!", "status": SUCCESS})
+
+def ttn(day, part_of_day):
+
+    url = 'https://integrations.thethingsnetwork.org/ttn-eu/api/v2/down/app_02/process-id?key=ttn-account-v2.myhqlQ4IICToIOuJUvDvVygc6kBKRFmHPlrTXQoKVPE'
+    
+    m_type = 3
+    m_min = 0
+    m_flag = 0
+    
+    bytes_msg = encodePayload(m_type, day, part_of_day, m_min, m_flag)
+
+    pload = {
+        "dev_id": "device02",
+        "port": 1,
+        "confirmed": true,
+        "schedule": "last",
+        "payload_raw": base64.encodebytes(bytes_msg.to_bytes(3, "little")).decode().strip()
+    }
+
+    r = requests.post( url, data = pload)
+
 
 app.run(host='localhost', port=9000)
 
