@@ -1,0 +1,12 @@
+# MSG TYPE
+INFO = 1
+VOID = 2
+SET = 3
+
+# INFO FLAG
+ON_TIME = 0
+FORGOT = 1
+
+# SET FLAG
+ADD = 0
+RMV = 1

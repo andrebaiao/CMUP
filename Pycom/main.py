@@ -155,9 +155,9 @@ def setClock():
     print(rtc.now())
     print(utime.gmtime())
 
-    print("...........")
-    print(utime.mktime(rtc.now()) - utime.mktime((2021, 6, 14, 12, 21, 0, 0, 0)))
-    
+    print("...........setup_start_time = (2021, 6, 14, 12, 20, 0, 0, 0)")
+    print(utime.mktime((2021, 6, 14, 12, 21, 0, 0, 0)) - utime.mktime(rtc.now()))
+    return
     print("Lista: ", alarms_palarm)
     a = PAlarm( utime.mktime((2021, 6, 14, 12, 21, 0, 0, 0)) - utime.mktime(rtc.now()), (0,15,30), False, blinkLED, addAlarm, setup_time_slots[(0, 12,30)])
     
@@ -168,5 +168,5 @@ if __name__ == "__main__":
     pycom.heartbeat(False)
 
     print("Initiating...")
-    #setClock()
-    initiate()
+    setClock()
+    #initiate()
