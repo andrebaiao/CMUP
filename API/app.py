@@ -4,8 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 import jwt
 from flask_cors import CORS, cross_origin
-from utils import SUCCESS, CREATED, ERROR, FORBIDDEN, AlchemyEncoder, Day, PartOfDay
+from utils import SUCCESS, CREATED, ERROR, FORBIDDEN, AlchemyEncoder, Day, PartOfDay, convertHourToPartOfDay
 from models import User, Patient, Pill, TakingPills
+import datetime
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
@@ -204,6 +205,31 @@ def create_new_treatment():
     db.session.commit()
 
     return jsonify({"message": "New patient added with success", "status": SUCCESS})
+
+
+@app.route('/takepill', methods=['POST'])
+@cross_origin()
+def takepill():
+
+    body_data = request.form
+    patient_id = body_data["patient_id"]
+    day = Day( int(body_data["day"]) )
+    hour = int(body_data["hour"])
+    minu = int(body_data["minu"])
+    take = body_data["take"]
+    
+    date_today = datetime.date.today()
+    time_took_pill = datetime.datetime(date_today.year, date_today.month, date_today.day,
+										hour, minu, 0, 62371)
+
+    part_of_day = convertHourToPartOfDay(time_took_pill)
+
+    taking_pill = TakingPills(patient_id=patient_id, date=time_took_pill, part_of_day=part_of_day, day=day)
+    
+    db.session.add(taking_pill)
+    db.session.commit()
+
+    return jsonify({"message": " Take Pill Record with success!", "status": SUCCESS})
 
 app.run(host='localhost', port=9000)
 
