@@ -35,10 +35,12 @@ $ python3 -m app.py
 
 ## Frontend
 
-'''
+```
+$ cd Frontend
 $ npm install @material-ui/core
+$ npm install
 $ npm start
-'''
+```
 https://demos.creative-tim.com/paper-dashboard-react/#/documentation/quick-start
 
 ### MQTT
