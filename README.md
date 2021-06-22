@@ -34,3 +34,6 @@ $ python3 -m app.py
 Run Frontend
 npm install @material-ui/core
 https://demos.creative-tim.com/paper-dashboard-react/#/documentation/quick-start
+
+### PyCom
+Run the file main.py located in Folder /Pycom, after changing `app_eui` and `app_key` variables in that same file.
