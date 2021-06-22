@@ -5,8 +5,6 @@ Luís Fonseca
 
 ## Setup
 
-## API
-
 Create a venv:
 
 ```
@@ -19,6 +17,8 @@ Install the dependencies:
 ```
 $ pip3 install -r requirements.txt
 ```
+
+## API
 
 SetUp Database:
 
