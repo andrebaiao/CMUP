@@ -24,6 +24,13 @@ class PartOfDay(OrderedEnum):
     DIN = 3
     NIG = 4
 
+HOUR_PARTOFDAY = {
+    1: 7,
+    2: 12,
+    3: 19,
+    4: 23
+}
+
 
 class AlchemyEncoder(json.JSONEncoder):
 
@@ -61,4 +68,30 @@ def convertHourToPartOfDay(takePill_date):
 def getDayOnWeek(takePill_date):
     day = takePill_date.strftime("%a").upper()
     return Day[day]
+
+
+def encodePayload(m_type, day, hour, minute, flag, delay=0):
+    assert 0 <= m_type <= 3
+    assert 0 <= day <= 6
+    assert 0 <= hour <= 24
+    assert 0 <= minute <= 60
+    assert 0 <= flag <= 1  # type=3 (set/downlink) -> flag=0:add,flag=1:rm; #type=1 (info) -> flag=0:on_time;flag=1:has_delay [check delay]
+    assert 0 <= delay <= 120
+
+    payload_meta = 0
+    payload_meta |= (m_type << 22)
+
+    payload_meta |= (day << 19)
+
+    payload_meta |= (hour << 14)
+
+    payload_meta |= (minute << 8)
+
+    payload_all = payload_meta
+
+    payload_all |= (flag << 7)
+
+    payload_all |= (delay << 0)
+
+    return payload_all
 
