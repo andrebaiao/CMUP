@@ -5,6 +5,8 @@ Luís Fonseca
 
 ## Setup
 
+## API
+
 Create a venv:
 
 ```
@@ -31,8 +33,12 @@ Run flask api on port 9000:
 $ python3 -m app.py
 ```
 
-Run Frontend
-npm install @material-ui/core
+## Frontend
+
+'''
+$ npm install @material-ui/core
+$ npm start
+'''
 https://demos.creative-tim.com/paper-dashboard-react/#/documentation/quick-start
 
 ### MQTT
