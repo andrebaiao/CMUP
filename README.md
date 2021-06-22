@@ -35,5 +35,8 @@ Run Frontend
 npm install @material-ui/core
 https://demos.creative-tim.com/paper-dashboard-react/#/documentation/quick-start
 
+### MQTT
+As yet another proccess, run `consumer.py`, located in the folder /Pycom.
+
 ### PyCom
-Run the file main.py located in Folder /Pycom, after changing `app_eui` and `app_key` variables in that same file.
+Run the file `main.py` located in the folder /Pycom on your device, after changing `app_eui` and `app_key` variables in that same file.
