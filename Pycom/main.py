@@ -14,10 +14,11 @@ from machine import RTC
 import utime
 from PAlarm import PAlarm
 import luand
+import const
 
 """ Setup Variables - Must be Set/verified before every run """
                 #   Y    M   D   H   m
-setup_start_time = (2021, 6, 14, 6, 58)
+setup_start_time = (2021, 6, 14, 6, 57)
 setup_time_slots = {(0, 7, 0) : Pin('P10', mode = Pin.IN), (0,12, 0) : Pin('P9', mode = Pin.IN)} # <weekday [0-6 / mon-sun], hour [0-23], minute [0-60]>
 
 """ Global Vars """
@@ -27,8 +28,6 @@ color_lock = _thread.allocate_lock()
 alarms_lock = _thread.allocate_lock()
 
 alarms_palarm = []
-
-s = None    # Socket
 
 """ Shared Region """
 def blinkLED():
@@ -41,32 +40,33 @@ def blinkLED():
         pycom.rgbled(0x000000)
 
 
-def addAlarm(timemark: tuple, weekly = False):
-    print("Adding :D")
+def addAlarm(timemark: tuple, ssocket : socket , weekly = False):
     index = -1
+    found = False
     with alarms_lock:
         for a in alarms_palarm:
             index+=1
             if a.getSchedule() == timemark:
+                found = True
                 if a.isWeekly():
                     return False
                 else:
                     break
-        print("ListaA: ", alarms_palarm)
 
         t_pin = None
         for times in sorted(setup_time_slots.keys()):
             if timemark[0] == times[0] and 0 <= timemark[1] - times[1] <= 3:
-                print("fica: ", times, setup_time_slots[times])
                 t_pin = setup_time_slots[times]
                 break
         
         if not t_pin:
             return False
         
-        if weekly:
-            alarms_palarm.pop(index)    # TODO: por seconds of a week
-            alarms_palarm.append( PAlarm(10, timemark, weekly, blinkLED, addAlarm, t_pin) )
+        if found:
+            alarms_palarm.pop(index) 
+
+        if weekly:                      # seconds in a week
+            alarms_palarm.append( PAlarm(604800, timemark, weekly, blinkLED, addAlarm, t_pin, ssocket) )
         else:
                 t_now = utime.gmtime()
                 t_day = t_now[6]
@@ -74,10 +74,9 @@ def addAlarm(timemark: tuple, weekly = False):
                 diff_days = timemark[0] - t_day
                 if diff_days < 0:
                     diff_days = (7 - t_day) + timemark[0]
-                print(">>", diff_days)                   # seconds in a day                              
-                print(utime.gmtime( utime.mktime(t_now) + 86400 *  diff_days))
-                alarms_palarm.append( PAlarm(utime.mktime(t_now) + 86400 *  diff_days, timemark, weekly, blinkLED, addAlarm, t_pin) )
-        print("ListaD: ", alarms_palarm[0].)
+                                            # seconds in a day  - actually seconds                              + desired seconds
+                alarms_palarm.append( PAlarm(86400 * diff_days - (t_now[3] * 3600 + t_now[4] * 60 + t_now[5]) + (timemark[1] * 3600 + timemark[2] * 60), timemark, weekly, blinkLED, addAlarm, t_pin, ssocket) )
+        print("ListaD: ", alarms_palarm)
         return True
 
 def removeAlarm(timemark: tuple):
@@ -93,27 +92,28 @@ def removeAlarm(timemark: tuple):
 
 """ Threads """
 """ Downlink Receiver """
-def threadWork():
+def threadWork(ssocket : socket):
     sct = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
     sct.setsockopt(socket.SOL_LORA, socket.SO_DR, 5)
     sct.bind(1)
     sct.setblocking(True)
-    #sct.settimeout(30)
+
     while True:
         try:
             print("Receiving...")
             msg = sct.recv(64)
-            print("got", msg)
 
             #interpret data
             data = int.from_bytes(msg, 'little')
-            print("msg3: ", data)
             payload = luand.decodePayload(msg)
             print("Payload received: ", payload)
 
-            addAlarm( (payload[1], payload[2], payload[3]) )
+            if int(payload[0]) == const.SET and int(payload[4]) == const.ADD:
+                addAlarm( (payload[1], payload[2], payload[3]), ssocket )
+
+            ssocket.send( luand.encodePayload(const.VOID, 0, 0, 0, 0, 0).to_bytes(3, 'little') )
         except Exception as e:
-            pass
+            print("An error has ocorred:", e)
 
 def initiate():
 
@@ -139,57 +139,22 @@ def initiate():
     s.setsockopt(socket.SOL_LORA, socket.SO_DR, 5)
     s.setblocking(False)
 
-    _thread.start_new_thread(threadWork, ())
-
+    _thread.start_new_thread(threadWork, [s] )
     while True:
-        time.sleep(1)
+        s.send( luand.encodePayload(const.VOID, 0, 0, 0, 0, 0).to_bytes(3, 'little') )
 
-        type = 3
-        day = 6
-        hour = 24
-        min = 60
-
-        msg = luand.encodePayload(type, day, hour, min, 1).to_bytes(3, 'little')
-
-        print(msg)
-        
-        pycom.rgbled(0x0000ff)
-        s.send(msg)
-
-        #rest for a while
-        time.sleep(15)
+        #rest for a arbitrary interval   
+        time.sleep(60 * 30)
 
 def setClock():
 
     rtc.init(setup_start_time)
 
-    print(rtc.now())
-    """ print(utime.gmtime())
-
-    print("...........setup_start_time = (2021, 6, 14, 12, 20, 0, 0, 0)")
-    print(utime.mktime((2021, 6, 14, 12, 21, 0, 0, 0)) - utime.mktime(rtc.now()))
-    print("|||||||||||")
-    utime.sleep(1)
-    t_now = utime.gmtime()
-    t_day = t_now[6]
-    print(t_now, t_now[6])
-
-    target = (0,15,30)
-    diff_days = target[0] - t_day
-    if diff_days < 0:
-        diff_days = (7 - t_day) + target[0]
-    print(">>", diff_days)                      # seconds in a day                              
-    print(utime.gmtime( utime.mktime(t_now) + 86400 *  diff_days)) """
-
-    """ print("Lista: ", alarms_palarm)
-    a = PAlarm( utime.mktime((2021, 6, 14, 12, 21, 0, 0, 0)) - utime.mktime(rtc.now()), (0,15,30), False, blinkLED, addAlarm, setup_time_slots[(0, 12,30)])
-    
-    alarms_palarm.append(a)
-    print("Lista: ", alarms_palarm) """
+    print("Actual Time: ", rtc.now())
 
 if __name__ == "__main__":
     pycom.heartbeat(False)
 
     print("Initiating...")
-    #setClock()
+    setClock()
     initiate()
