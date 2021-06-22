@@ -1,6 +1,6 @@
 # CMUP
 Project CMUP
-André Alves
+André Alves e 
 Luís Fonseca
 
 ## Setup
